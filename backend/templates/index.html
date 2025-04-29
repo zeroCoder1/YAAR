@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>App Reviews Scraper</title>
+  <script src="https://cdn.jsdelivr.net/npm/d3-cloud/build/d3.layout.cloud.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    .spinner {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    button,
+    select,
+    input {
+      margin: 5px;
+      padding: 8px;
+    }
+
+    .review-box {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>📱 App Reviews</h1>
+  <h2>Reviews ({{ reviews|length }})</h2>
+  <form id="scrapeForm" method="post" action="/scrape" onsubmit="showSpinner()">
+    <input type="text" name="playstore_id" placeholder="Play Store Bundle ID" value="{{ playstore_id or '' }}">
+    <input type="text" name="appstore_id" placeholder="App Store App ID" value="{{ appstore_id or '' }}">
+    <button type="submit">Scrape Reviews</button>
+  </form>
+
+  <div class="spinner" id="spinner">
+    <h3>Loading Reviews... 🔄</h3>
+  </div>
+
+  <hr>
+
+  <form method="get" action="/">
+    <select name="platform">
+      <option value="">All Platforms</option>
+      <option value="android" {% if platform=='android' %}selected{% endif %}>Android</option>
+      <option value="ios" {% if platform=='ios' %}selected{% endif %}>iOS</option>
+    </select>
+
+    <select name="stars">
+      <option value="">All Ratings</option>
+      <option value="1" {% if stars=='1' %}selected{% endif %}>1 Star</option>
+      <option value="2" {% if stars=='2' %}selected{% endif %}>2 Stars</option>
+      <option value="3" {% if stars=='3' %}selected{% endif %}>3 Stars</option>
+      <option value="4" {% if stars=='4' %}selected{% endif %}>4 Stars</option>
+      <option value="5" {% if stars=='5' %}selected{% endif %}>5 Stars</option>
+    </select>
+
+    <input type="text" name="word" placeholder="Filter by word" value="{{ word or '' }}">
+
+    <button type="submit">Apply Filter</button>
+    <a href="/" style="margin-left:10px; color:red;">Clear Filters</a>
+  </form>
+
+  <hr>
+
+  <h2></h2>
+  <div id="wordcloud"></div>
+
+  <h2>Reviews</h2>
+  {% for r in reviews %}
+  <div class="review-box">
+    <strong>{{ r.platform.upper() }} - {{ r.rating }} ⭐ </strong> - {{ r.date }} <br>
+    {{ r.content }}
+  </div>
+  {% endfor %}
+
+  <script>
+
+    const stopWords = new Set([
+      "the", "and", "to", "of", "in", "for", "is", "on", "this", "that",
+      "it", "was", "with", "as", "are", "but", "at", "by", "an", "be",
+      "if", "or", "from", "so", "a", "i", "you", "we", "my", "they", "me",
+      "he", "she", "our", "not", "have", "has", "had", "just", "too", "do", "did", "app", "very", "why", "what"
+    ]);
+
+
+
+    function showSpinner() {
+      document.getElementById('spinner').style.display = 'block';
+    }
+
+    const reviews = {{ reviews| tojson }};
+    const words = {};
+    reviews.forEach(r => {
+      r.content
+        .split(/\s+/)
+        .map(w => w.toLowerCase().replace(/[.,!?'"()\[\]{}]/g, ''))
+        .filter(w => w.length > 2 && !stopWords.has(w))
+        .forEach(w => {
+          words[w] = (words[w] || 0) + 1;
+        });
+    });
+
+
+    const wordData = Object.entries(words).map(([text, value]) => ({
+      text,
+      value,
+    }));
+
+    const width = 800;
+    const height = 300;
+    const fill = d3.scaleOrdinal(d3.schemeCategory10);
+
+    const layout = d3.layout.cloud()
+      .size([width, height])
+      .words(wordData)
+      .padding(5)
+      .rotate(() => 0)
+      .fontSize(d => {
+        const baseSize = Math.sqrt(d.value) * 5;
+        return wordData.length < 30 ? baseSize * 1.8 : baseSize;
+      })
+      .on("end", draw);
+
+    layout.start();
+
+    function draw(words) {
+      const svg = d3.select("#wordcloud").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", `translate(${width / 2},${height / 2})`);
+
+      svg.selectAll("text")
+        .data(words)
+        .enter().append("text")
+        .style("font-family", "Impact")
+        .style("fill", (d, i) => fill(i))
+        .style("font-size", "1px")
+        .attr("text-anchor", "middle")
+        .attr("transform", d => `translate(${d.x},${d.y})rotate(${d.rotate})`)
+        .text(d => d.text)
+        .on("click", function (event, d) {
+          const params = new URLSearchParams(window.location.search);
+          params.set("word", d.text);  // override or add
+          window.location.href = "/?" + params.toString();
+        })
+        .transition()
+        .duration(800)
+        .style("font-size", d => `${d.size}px`);
+    }
+  </script>
+
+</body>
+
+</html>
