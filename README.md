@@ -36,4 +36,24 @@ Built for product teams, indie developers, and analysts who want real insights �
 - Hosted using [Uvicorn](https://www.uvicorn.org/)
 
 ---
+
+## 🏗️ Build Locally
+
+- Create project folder and enter it
+mkdir yaar && cd yaar
+
+- Create Python virtual environment
+```python3 -m venv venv```
+```source venv/bin/activate```
+
+- Install dependencies
+```pip install requirements```
+or
+```pip install fastapi uvicorn jinja2 google-play-scraper python-multipart requests d3-cloud```
+
+- Start the FastAPI server
+```uvicorn main:app --reload --host 0.0.0.0 --port 8000```
+
+---
+## 📺 Live
 https://yaar.onrender.com/
