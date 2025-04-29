@@ -36,3 +36,4 @@ Built for product teams, indie developers, and analysts who want real insights â
 - Hosted using [Uvicorn](https://www.uvicorn.org/)
 
 ---
+https://yaar.onrender.com/
