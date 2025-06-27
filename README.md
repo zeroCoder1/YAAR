@@ -59,3 +59,8 @@ or
 https://yaar.onrender.com/
 
 <!-- GitAds-Verify: XGWI27XE3EP743UULA35VVTAKNJPCVKD -->
+
+## GitAds Sponsored
+[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=zerocoder1/yaar@github)](https://gitads.dev/v1/ad-track?source=zerocoder1/yaar@github)
+
+
